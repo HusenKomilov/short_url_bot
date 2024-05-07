@@ -1,39 +1,31 @@
-import datetime
-
-from django.utils import timezone
 from telegram import ParseMode, Update
-from telegram.ext import CallbackContext
-
-from tgbot.handlers.onboarding import static_text
-from tgbot.handlers.utils.info import extract_user_data_from_update
+from telegram.ext import CallbackContext, ConversationHandler
 from users.models import User
-from tgbot.handlers.onboarding.keyboards import make_keyboard_for_start_command
+from short_url import models, utils
+from utils.states import URL_STATES
+
+from django.shortcuts import get_object_or_404, get_list_or_404
 
 
 def command_start(update: Update, context: CallbackContext) -> None:
-    u, created = User.get_user_and_created(update, context)
-
-    if created:
-        text = static_text.start_created.format(first_name=u.first_name)
-    else:
-        text = static_text.start_not_created.format(first_name=u.first_name)
-
-    update.message.reply_text(text=text,
-                              reply_markup=make_keyboard_for_start_command())
+    User.get_user_and_created(update, context)
+    text = "Salom"
+    chat_id = update.message.chat.id
+    context.bot.send_message(chat_id=chat_id, text=text)
+    # return URL_STATES
 
 
-def secret_level(update: Update, context: CallbackContext) -> None:
-    # callback_data: SECRET_LEVEL_BUTTON variable from manage_data.py
-    """ Pressed 'secret_level_button_text' after /start command"""
-    user_id = extract_user_data_from_update(update)['user_id']
-    text = static_text.unlock_secret_room.format(
-        user_count=User.objects.count(),
-        active_24=User.objects.filter(updated_at__gte=timezone.now() - datetime.timedelta(hours=24)).count()
-    )
+def url_send_handler(update: Update, context: CallbackContext) -> None:
+    chat_id = update.message.chat.id
+    url = update.message.text
+    short_url = models.Link.objects.create(url=url)
+    domain = "http://127.0.0.1:8000/"
+    context.bot.send_message(chat_id, text=f"<code><a href='{short_url.url}'>{domain}{short_url.code}</a></code>",
+                             parse_mode="html")
+    return URL_STATES
 
-    context.bot.edit_message_text(
-        text=text,
-        chat_id=user_id,
-        message_id=update.callback_query.message.message_id,
-        parse_mode=ParseMode.HTML
-    )
+
+def url_error_handler(update: Update, context: CallbackContext) -> None:
+    chat_id = update.message.chat.id
+    context.bot.send_message(chat_id, text="Siz url manzil yubormadingiz")
+    return ConversationHandler.END

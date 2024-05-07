@@ -1,3 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import redirect, get_object_or_404
+from .models import Link
 
-# Create your views here.
+
+def show_url(request, code):
+    link = Link.objects.get(code=code)
+    return redirect(link.url)
