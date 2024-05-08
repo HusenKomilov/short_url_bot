@@ -12,7 +12,7 @@ def command_start(update: Update, context: CallbackContext) -> None:
     text = "Salom"
     chat_id = update.message.chat.id
     context.bot.send_message(chat_id=chat_id, text=text)
-    # return URL_STATES
+    return URL_STATES
 
 
 def url_send_handler(update: Update, context: CallbackContext) -> None:
@@ -28,4 +28,4 @@ def url_send_handler(update: Update, context: CallbackContext) -> None:
 def url_error_handler(update: Update, context: CallbackContext) -> None:
     chat_id = update.message.chat.id
     context.bot.send_message(chat_id, text="Siz url manzil yubormadingiz")
-    return ConversationHandler.END
+    
